@@ -14,7 +14,17 @@ A Figma plugin for browsing your Are.na channels and groups, importing images in
 
 ## Setup
 
-1. Clone the repo and install dependencies:
+### Option A: Download directly
+
+1. [Download the latest ZIP](https://github.com/brianokarski/arena-figma-plugin/archive/refs/heads/main.zip) and unzip it.
+2. Open a terminal in the unzipped folder and run:
+
+```
+npm install
+npm run build
+```
+
+### Option B: Clone via terminal
 
 ```
 git clone https://github.com/brianokarski/arena-figma-plugin.git
@@ -23,8 +33,10 @@ npm install
 npm run build
 ```
 
-2. In Figma, go to **Plugins → Development → Import plugin from manifest** and select the `manifest.json` file.
+### Then
 
-3. Generate a personal access token at [are.na/settings/personal-access-tokens](https://are.na/settings/personal-access-tokens).
+1. In Figma, go to **Plugins → Development → Import plugin from manifest** and select the `manifest.json` file from the folder.
 
-4. Open the plugin, enter your Are.na username (the slug from your profile URL) and paste your token.
+2. Generate a personal access token at [are.na/settings/personal-access-tokens](https://are.na/settings/personal-access-tokens).
+
+3. Open the plugin, enter your Are.na username (the slug from your profile URL) and paste your token.
