@@ -28,11 +28,3 @@ npm run build
 3. Generate a personal access token at [are.na/settings/personal-access-tokens](https://are.na/settings/personal-access-tokens).
 
 4. Open the plugin, enter your Are.na username (the slug from your profile URL) and paste your token.
-
-## Development
-
-```
-npm run watch
-```
-
-This will rebuild automatically when you change `src/code.ts`. Changes to `src/ui.html` are picked up on plugin reload.
