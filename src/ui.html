@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  :root {
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --muted: #737373;
+    --border: #e5e5e5;
+    --accent: #0a0a0a;
+    --green: #16A34A;
+    --hover: #FAFAFA;
+    --subtle: #F5F5F5;
+    --font-mono: 'ABC Simon Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    --font-body: 'ABC Walter Neue', system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--foreground);
+    background: var(--background);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Layout ───────────────────────────────────────── */
+
+  .screen { display: none; height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    flex: 1;
+  }
+
+  .scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  /* ── Buttons ──────────────────────────────────────── */
+
+  button {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    padding: 6px 12px;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  button:hover {
+    background: var(--subtle);
+    border-color: #D4D4D4;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  button.primary:hover { opacity: 0.85; }
+
+  button.small { padding: 4px 8px; font-size: 10px; }
+
+  button.back {
+    background: none;
+    border: none;
+    padding: 4px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--muted);
+  }
+  button.back:hover { color: var(--foreground); }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Inputs ───────────────────────────────────────── */
+
+  input[type="text"], input[type="password"] {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border: 1px dashed #D4D4D4;
+    border-radius: 0;
+    padding: 8px 12px;
+    width: 100%;
+    outline: none;
+    background: transparent;
+    color: var(--foreground);
+    transition: border-color 0.2s ease;
+  }
+  input::placeholder { color: #A3A3A3; }
+  input:focus { border-color: var(--accent); border-style: solid; }
+
+  /* ── Auth Screen ──────────────────────────────────── */
+
+  .auth-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 16px;
+  }
+
+  .auth-body p {
+    color: var(--muted);
+    line-height: 1.6;
+    font-size: 12px;
+  }
+
+  .auth-body a {
+    color: var(--foreground);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .auth-body a:hover { opacity: 0.7; }
+
+  /* ── Label (mono uppercase) ────────────────────────── */
+
+  .label-upper {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Channel List ─────────────────────────────────── */
+
+  .channel-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    gap: 12px;
+  }
+  .channel-item:hover { background: var(--hover); }
+
+  .channel-info { flex: 1; min-width: 0; }
+  .channel-title {
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .channel-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.02em;
+  }
+
+  .channel-status {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ── Image Grid ───────────────────────────────────── */
+
+  .grid-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .grid-controls label {
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.02em;
+  }
+
+  .grid-controls .spacer { flex: 1; }
+
+  .grid-controls .count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: min-content;
+    gap: 4px;
+    padding: 4px;
+    align-content: start;
+  }
+
+  .image-tile {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s ease;
+  }
+
+  .image-tile:hover { border-color: #D4D4D4; }
+
+  .image-tile img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: opacity 0.2s ease;
+  }
+
+  .image-tile:hover img { opacity: 0.85; }
+
+  .image-tile .check {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid rgba(255,255,255,0.8);
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .image-tile .check svg {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .image-tile.selected .check {
+    background: #CDFF18;
+    border-color: #CDFF18;
+  }
+
+  .image-tile.selected .check svg { opacity: 1; }
+
+  .image-tile.imported { opacity: 0.5; }
+
+  .image-tile .imported-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    background: #CDFF18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .image-tile .title-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 18px 6px 6px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.5));
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+  }
+
+  .image-tile:hover .title-overlay { opacity: 1; }
+
+  /* ── Loading / Empty ──────────────────────────────── */
+
+  .loading, .empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align: center;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Toast ────────────────────────────────────────── */
+
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-mono);
+    padding: 8px 16px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Pagination ───────────────────────────────────── */
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .pagination span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH SCREEN ══════════════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="header">
+    <h1>Are.na Browser</h1>
+  </div>
+  <div class="auth-body">
+    <p>
+      Enter your Are.na username and access token.<br/>
+      Your username is the slug in your profile URL:<br/>
+      are.na/<strong>your-slug</strong>
+    </p>
+    <input type="text" id="slug-input" placeholder="Your Are.na username / slug" />
+    <p style="margin-top:4px">
+      Generate a token at
+      <a href="https://are.na/settings/personal-access-tokens" target="_blank">
+        are.na/settings/personal-access-tokens
+      </a>
+    </p>
+    <input type="password" id="token-input" placeholder="Paste access token..." />
+    <button class="primary" id="btn-connect">Connect</button>
+  </div>
+</div>
+
+<!-- ═══ CHANNELS SCREEN ═════════════════════════════════════════════════ -->
+<div id="screen-channels" class="screen">
+  <div class="header">
+    <h1 id="channels-title">Your Channels</h1>
+    <button class="small" id="btn-disconnect">Disconnect</button>
+  </div>
+  <div style="display:flex; gap:4px; padding:8px 16px; border-bottom:1px solid var(--border); align-items:center; flex-shrink:0;">
+    <input type="text" id="group-input" placeholder="Group or channel slug..." style="font-size:11px; padding:5px 8px; flex:1;" />
+    <button class="small" id="btn-load-group">Go</button>
+    <button class="small" id="btn-my-channels">Mine</button>
+  </div>
+  <div id="channels-loading" class="loading" style="display:none">
+    <div class="spinner"></div> Loading channels...
+  </div>
+  <div id="channels-list" class="scrollable"></div>
+  <div id="channels-pagination" class="pagination" style="display:none">
+    <button class="small" id="btn-ch-prev" disabled>&larr; Prev</button>
+    <span id="ch-page-info"></span>
+    <button class="small" id="btn-ch-next">Next &rarr;</button>
+  </div>
+</div>
+
+<!-- ═══ IMAGES SCREEN ═══════════════════════════════════════════════════ -->
+<div id="screen-images" class="screen">
+  <div class="header">
+    <button class="back" id="btn-back">&larr;</button>
+    <h1 id="images-title">Channel</h1>
+  </div>
+  <div class="grid-controls">
+    <label>
+      <input type="checkbox" id="select-all" /> Select all
+    </label>
+    <span class="count" id="selection-count"></span>
+    <span class="spacer"></span>
+    <button class="primary small" id="btn-import" disabled>Import Selected</button>
+  </div>
+  <div id="images-loading" class="loading" style="display:none">
+    <div class="spinner"></div> Loading images...
+  </div>
+  <div id="images-empty" class="empty" style="display:none">
+    No images in this channel.
+  </div>
+  <div id="image-grid" class="image-grid scrollable"></div>
+  <div id="images-pagination" class="pagination" style="display:none">
+    <button class="small" id="btn-img-prev" disabled>&larr; Prev</button>
+    <span id="img-page-info"></span>
+    <button class="small" id="btn-img-next">Next &rarr;</button>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══════════════════════════════════════════════════════════ -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+
+let token = null;
+let userSlug = null;
+let importedIds = new Set();
+
+let channelsPage = 1;
+let channelsTotalPages = 1;
+let allChannels = [];
+
+let currentSlug = "";
+let currentChannelTitle = "";
+let imagesPage = 1;
+let imagesTotalPages = 1;
+let imageBlocks = [];
+let selectedBlockIds = new Set();
+let userGroups = [];
+
+const CHANNELS_PER = 40;
+const IMAGES_PER = 100;
+
+// Pending fetch requests relayed through code.ts (no CORS issues)
+var pendingFetches = {};
+var fetchCounter = 0;
+
+// ── DOM refs ───────────────────────────────────────────────────────────
+
+const $ = (sel) => document.querySelector(sel);
+
+const screens = {
+  auth: $("#screen-auth"),
+  channels: $("#screen-channels"),
+  images: $("#screen-images"),
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach((s) => s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+
+let toastTimer = null;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+}
+
+// ── Plugin communication ───────────────────────────────────────────────
+
+function postMsg(msg) {
+  parent.postMessage({ pluginMessage: msg }, "*");
+}
+
+window.onmessage = (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  switch (msg.type) {
+    case "init":
+      if (msg.savedGroups && msg.savedGroups.length > 0) {
+        userGroups = msg.savedGroups;
+      }
+      if (msg.token && msg.slug) {
+        token = msg.token;
+        userSlug = msg.slug;
+        loadChannels();
+      } else {
+        showScreen("auth");
+      }
+      break;
+
+    case "token-saved":
+      loadChannels();
+      break;
+
+    case "token-cleared":
+      token = null;
+      userSlug = null;
+      showScreen("auth");
+      break;
+
+    case "imported-ids":
+      importedIds = new Set((msg.ids || []).map(String));
+      refreshImportedBadges();
+      updateSelectionCount();
+      break;
+
+    case "import-complete":
+      toast(`${msg.count} image${msg.count !== 1 ? "s" : ""} imported`);
+      $("#btn-import").disabled = false;
+      $("#btn-import").textContent = "Import Selected";
+      break;
+
+    case "arena-fetch-response": {
+      var pending = pendingFetches[msg.requestId];
+      if (pending) {
+        delete pendingFetches[msg.requestId];
+        if (msg.error) {
+          console.error("[arena] relay error:", msg.error, "for", msg.requestId);
+          pending.reject(new Error(msg.error));
+        } else {
+          console.log("[arena] relay success for", msg.requestId);
+          pending.resolve(msg.data);
+        }
+      }
+      break;
+    }
+  }
+};
+
+// ── Are.na API helpers ─────────────────────────────────────────────────
+
+function arenaFetch(path, useAuth) {
+  var requestId = "req-" + (++fetchCounter);
+  console.log("[arena] relay fetch:", path, "auth:", !!useAuth, "id:", requestId);
+
+  return new Promise(function(resolve, reject) {
+    pendingFetches[requestId] = { resolve: resolve, reject: reject };
+    postMsg({
+      type: "arena-fetch",
+      requestId: requestId,
+      path: path,
+      useAuth: !!useAuth,
+      token: token
+    });
+  });
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────
+
+$("#btn-connect").onclick = () => {
+  var slugVal = $("#slug-input").value.trim();
+  var tokenVal = $("#token-input").value.trim();
+  if (!slugVal) { toast("Enter your Are.na username"); return; }
+  if (!tokenVal) { toast("Enter your access token"); return; }
+  token = tokenVal;
+  userSlug = slugVal;
+  postMsg({ type: "save-token", token: tokenVal, slug: slugVal });
+};
+
+$("#token-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") $("#btn-connect").click();
+});
+$("#slug-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") $("#token-input").focus();
+});
+
+// ── Channels ───────────────────────────────────────────────────────────
+
+async function loadChannels() {
+  showScreen("channels");
+  $("#channels-list").innerHTML = "";
+  $("#channels-loading").style.display = "flex";
+  $("#channels-pagination").style.display = "none";
+  $("#channels-title").textContent = userSlug + "'s Channels";
+
+  try {
+    // Step 1: validate token by calling /me (V3 endpoint)
+    console.log("[arena] validating token via /me...");
+    var me;
+    try {
+      me = await arenaFetch("/me", true);
+      console.log("[arena] token valid! authenticated as:", me.slug, me.name);
+      if (me.name) {
+        $("#channels-title").textContent = me.name + "'s Channels";
+      }
+    } catch (meErr) {
+      console.error("[arena] /me failed:", meErr.message);
+      toast("Invalid or expired token. Please check your access token.");
+      showScreen("auth");
+      return;
+    }
+
+    // Step 2: fetch channels via V3 contents endpoint with type=Channel
+    var channelSlug = me.slug || userSlug;
+    var channelPath = "/users/" + encodeURIComponent(channelSlug) + "/contents?type=Channel&sort=updated_at_desc&page=" + channelsPage + "&per=" + CHANNELS_PER;
+    console.log("[arena] fetching channels:", channelPath);
+    var data = await arenaFetch(channelPath, true);
+
+    allChannels = data.data || [];
+    channelsTotalPages = (data.meta && data.meta.total_pages) || 1;
+    renderChannels();
+
+    // Render saved group buttons if any
+    if (userGroups.length > 0) {
+      renderGroupButtons();
+    }
+
+  } catch (err) {
+    console.error("[arena] loadChannels error:", err.message);
+    if (err.message.indexOf("401") >= 0) {
+      toast("Token rejected. Please re-check your access token.");
+    } else if (err.message.indexOf("404") >= 0) {
+      toast("User not found: " + userSlug);
+    } else if (err.message.indexOf("Network") >= 0) {
+      toast("Cannot reach Are.na API");
+    } else {
+      toast("Error: " + err.message);
+    }
+  } finally {
+    $("#channels-loading").style.display = "none";
+  }
+}
+
+function renderGroupButtons() {
+  var existing = document.getElementById("group-buttons");
+  if (existing) existing.remove();
+  if (!userGroups || userGroups.length === 0) return;
+
+  var container = document.createElement("div");
+  container.id = "group-buttons";
+  container.style.cssText = "display:flex; flex-wrap:wrap; gap:4px; padding:4px 16px 8px; border-bottom:1px solid var(--border);";
+
+  var label = document.createElement("span");
+  label.textContent = "Groups:";
+  label.style.cssText = "font-family:var(--font-mono); font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; align-self:center; margin-right:2px;";
+  container.appendChild(label);
+
+  userGroups.forEach(function(g) {
+    var wrapper = document.createElement("span");
+    wrapper.style.cssText = "display:inline-flex; align-items:center; gap:0; border:1px solid var(--border);";
+
+    var btn = document.createElement("button");
+    btn.className = "small";
+    btn.textContent = g.name || g.slug;
+    btn.style.cssText = "font-size:10px; padding:2px 6px; border:none;";
+    btn.onclick = function() {
+      currentGroupSlug = g.slug;
+      currentContext = "group";
+      channelsPage = 1;
+      $("#group-input").value = g.slug;
+      loadGroupChannels(g.slug);
+    };
+    wrapper.appendChild(btn);
+
+    var removeBtn = document.createElement("button");
+    removeBtn.className = "small";
+    removeBtn.innerHTML = "&times;";
+    removeBtn.title = "Remove group";
+    removeBtn.style.cssText = "font-size:11px; padding:2px 4px; border:none; border-left:1px solid var(--border); color:var(--muted); line-height:1;";
+    removeBtn.onclick = function(e) {
+      e.stopPropagation();
+      removeGroup(g.slug);
+    };
+    wrapper.appendChild(removeBtn);
+
+    container.appendChild(wrapper);
+  });
+
+  // Insert after the input bar
+  var inputBar = $("#group-input").parentElement;
+  inputBar.parentElement.insertBefore(container, inputBar.nextSibling);
+}
+
+function saveGroup(slug, name) {
+  // Check if already saved
+  var exists = userGroups.some(function(g) { return g.slug === slug; });
+  if (!exists) {
+    userGroups.push({ slug: slug, name: name || slug });
+    renderGroupButtons();
+  } else {
+    // Update name if it changed
+    userGroups.forEach(function(g) {
+      if (g.slug === slug && name && name !== slug) { g.name = name; }
+    });
+  }
+  // Persist to clientStorage via code.ts
+  postMsg({ type: "save-groups", groups: userGroups });
+}
+
+function removeGroup(slug) {
+  userGroups = userGroups.filter(function(g) { return g.slug !== slug; });
+  postMsg({ type: "save-groups", groups: userGroups });
+  renderGroupButtons();
+}
+
+function renderChannels() {
+  const list = $("#channels-list");
+  list.innerHTML = "";
+
+  const channels = Array.isArray(allChannels) ? allChannels : [];
+
+  if (channels.length === 0) {
+    list.innerHTML = '<div class="empty">No channels found.</div>';
+    return;
+  }
+
+  channels.forEach((ch) => {
+    const item = document.createElement("div");
+    item.className = "channel-item";
+    var blockCount = (ch.counts && ch.counts.contents) || ch.length || 0;
+    var status = ch.visibility || ch.status || "public";
+    item.innerHTML = `
+      <div class="channel-info">
+        <div class="channel-title">${esc(ch.title)}</div>
+        <div class="channel-meta">${blockCount} block${blockCount !== 1 ? "s" : ""}</div>
+      </div>
+      <span class="channel-status">${esc(status)}</span>
+    `;
+    item.onclick = () => openChannel(ch.slug, ch.title);
+    list.appendChild(item);
+  });
+
+  // pagination
+  if (channelsTotalPages > 1) {
+    $("#channels-pagination").style.display = "flex";
+    $("#ch-page-info").textContent = `${channelsPage} / ${channelsTotalPages}`;
+    $("#btn-ch-prev").disabled = channelsPage <= 1;
+    $("#btn-ch-next").disabled = channelsPage >= channelsTotalPages;
+  } else {
+    $("#channels-pagination").style.display = "none";
+  }
+}
+
+$("#btn-ch-prev").onclick = () => {
+  if (channelsPage > 1) {
+    channelsPage--;
+    if (currentContext === "group") { loadGroupChannels(currentGroupSlug); }
+    else { loadChannels(); }
+  }
+};
+$("#btn-ch-next").onclick = () => {
+  if (channelsPage < channelsTotalPages) {
+    channelsPage++;
+    if (currentContext === "group") { loadGroupChannels(currentGroupSlug); }
+    else { loadChannels(); }
+  }
+};
+
+$("#btn-disconnect").onclick = () => {
+  postMsg({ type: "clear-token" });
+};
+
+// ── Group / direct channel loading ──────────────────────────────────────
+
+var currentContext = "personal"; // "personal" or "group"
+var currentGroupSlug = "";
+
+$("#btn-load-group").onclick = () => {
+  var val = $("#group-input").value.trim();
+  if (!val) { toast("Enter a group or channel slug"); return; }
+  // Strip URL parts if pasted full URL (e.g. are.na/my-group)
+  val = val.replace(/^https?:\/\/(www\.)?are\.na\//, "").replace(/\/$/, "").split("?")[0];
+  currentGroupSlug = val;
+  currentContext = "group";
+  channelsPage = 1;
+  loadGroupChannels(val);
+};
+
+$("#group-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") $("#btn-load-group").click();
+});
+
+$("#btn-my-channels").onclick = () => {
+  currentContext = "personal";
+  currentGroupSlug = "";
+  $("#group-input").value = "";
+  channelsPage = 1;
+  loadChannels();
+};
+
+async function loadGroupChannels(groupSlug) {
+  showScreen("channels");
+  $("#channels-list").innerHTML = "";
+  $("#channels-loading").style.display = "flex";
+  $("#channels-pagination").style.display = "none";
+  $("#channels-title").textContent = groupSlug;
+
+  try {
+    // Get group info
+    var groupInfo;
+    try {
+      groupInfo = await arenaFetch("/groups/" + encodeURIComponent(groupSlug), true);
+      if (groupInfo.name) {
+        $("#channels-title").textContent = groupInfo.name;
+      }
+    } catch (_e) {
+      // group info failed, continue with slug as title
+    }
+
+    // Fetch group contents - fetch a large page and filter to channels client-side
+    var path = "/groups/" + encodeURIComponent(groupSlug) + "/contents?sort=updated_at_desc&per=100&page=1";
+    console.log("[arena] fetching group contents:", path);
+    var data = await arenaFetch(path, true);
+
+    var items = data.data || [];
+    // Filter to only Channel-type items
+    allChannels = items.filter(function(item) { return item.type === "Channel"; });
+    channelsTotalPages = 1;
+    renderChannels();
+
+    // Save this group for future sessions
+    saveGroup(groupSlug, groupInfo ? groupInfo.name : groupSlug);
+
+  } catch (err) {
+    console.error("[arena] loadGroupChannels error:", err.message);
+    if (err.message.indexOf("404") >= 0) {
+      toast("Group not found: " + groupSlug);
+    } else {
+      toast("Error: " + err.message);
+    }
+  } finally {
+    $("#channels-loading").style.display = "none";
+  }
+}
+
+// ── Images ─────────────────────────────────────────────────────────────
+
+async function openChannel(slug, title) {
+  currentSlug = slug;
+  currentChannelTitle = title;
+  imagesPage = 1;
+  selectedBlockIds.clear();
+  showScreen("images");
+  $("#images-title").textContent = title;
+  await loadImages();
+}
+
+async function loadImages() {
+  $("#image-grid").innerHTML = "";
+  $("#images-loading").style.display = "flex";
+  $("#images-empty").style.display = "none";
+  $("#images-pagination").style.display = "none";
+  $("#select-all").checked = false;
+  updateSelectionCount();
+
+  try {
+    var imgPath = "/channels/" + encodeURIComponent(currentSlug) + "/contents?sort=updated_at_desc&page=" + imagesPage + "&per=" + IMAGES_PER;
+    var data;
+    try {
+      data = await arenaFetch(imgPath, true);
+    } catch (_authErr) {
+      data = await arenaFetch(imgPath, false);
+    }
+
+    var contents = data.data || data.contents || [];
+    imagesTotalPages = (data.meta && data.meta.total_pages) || data.total_pages || 1;
+
+    imageBlocks = contents.filter(
+      function(b) {
+        var hasImage = b.image && (b.image.src || (b.image.small && b.image.small.src));
+        return (b.type === "Image" || b.class === "Image") && hasImage;
+      }
+    );
+
+    renderImages();
+  } catch (err) {
+    console.error(err);
+    toast("Failed to load channel contents");
+  } finally {
+    $("#images-loading").style.display = "none";
+  }
+}
+
+function renderImages() {
+  const grid = $("#image-grid");
+  grid.innerHTML = "";
+
+  if (imageBlocks.length === 0) {
+    $("#images-empty").style.display = "flex";
+    return;
+  }
+
+  imageBlocks.forEach((block) => {
+    const tile = document.createElement("div");
+    tile.className = "image-tile";
+    tile.dataset.blockId = String(block.id);
+
+    const isImported = importedIds.has(String(block.id));
+    // V3: image.small.src for thumb; V2 fallback: image.thumb.url
+    const thumbUrl = (block.image.small && block.image.small.src) || (block.image.thumb && block.image.thumb.url) || block.image.src || "";
+    const title = block.title || block.generated_title || "Untitled";
+
+    if (isImported) { tile.classList.add("imported"); }
+
+    tile.innerHTML = `
+      <img src="${esc(thumbUrl)}" alt="${esc(title)}" loading="lazy" />
+      <div class="check">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6l3 3 5-5" stroke="#000" stroke-width="2"/>
+        </svg>
+      </div>
+      ${isImported ? `
+        <div class="imported-badge" title="Already imported">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="#000" stroke-width="2"/>
+          </svg>
+        </div>
+      ` : ""}
+      <div class="title-overlay">${esc(title)}</div>
+    `;
+
+    tile.onclick = (e) => {
+      toggleSelect(tile, block);
+    };
+
+    grid.appendChild(tile);
+  });
+
+  // pagination
+  if (imagesTotalPages > 1) {
+    $("#images-pagination").style.display = "flex";
+    $("#img-page-info").textContent = `${imagesPage} / ${imagesTotalPages}`;
+    $("#btn-img-prev").disabled = imagesPage <= 1;
+    $("#btn-img-next").disabled = imagesPage >= imagesTotalPages;
+  }
+}
+
+function refreshImportedBadges() {
+  document.querySelectorAll(".image-tile").forEach((tile) => {
+    const blockId = tile.dataset.blockId;
+    const existing = tile.querySelector(".imported-badge");
+    if (importedIds.has(blockId) && !existing) {
+      tile.classList.add("imported");
+      const badge = document.createElement("div");
+      badge.className = "imported-badge";
+      badge.title = "Already imported";
+      badge.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6l3 3 5-5" stroke="#000" stroke-width="2"/>
+        </svg>
+      `;
+      tile.appendChild(badge);
+    }
+  });
+}
+
+// ── Selection ──────────────────────────────────────────────────────────
+
+function toggleSelect(tile, block) {
+  const id = String(block.id);
+  if (selectedBlockIds.has(id)) {
+    selectedBlockIds.delete(id);
+    tile.classList.remove("selected");
+  } else {
+    selectedBlockIds.add(id);
+    tile.classList.add("selected");
+  }
+  updateSelectionCount();
+}
+
+function updateSelectionCount() {
+  const n = selectedBlockIds.size;
+  const countEl = $("#selection-count");
+  countEl.textContent = n > 0 ? `${n} selected` : "";
+  $("#btn-import").disabled = n === 0;
+
+  const allSelected = imageBlocks.length > 0 && n === imageBlocks.length;
+  $("#select-all").checked = allSelected;
+}
+
+$("#select-all").onchange = (e) => {
+  const checked = e.target.checked;
+  selectedBlockIds.clear();
+
+  document.querySelectorAll(".image-tile").forEach((tile) => {
+    const blockId = tile.dataset.blockId;
+    if (checked) {
+      selectedBlockIds.add(blockId);
+      tile.classList.add("selected");
+    } else {
+      tile.classList.remove("selected");
+    }
+  });
+
+  updateSelectionCount();
+};
+
+// ── Import ─────────────────────────────────────────────────────────────
+
+$("#btn-import").onclick = () => {
+  if (selectedBlockIds.size === 0) return;
+
+  const images = imageBlocks
+    .filter((b) => selectedBlockIds.has(String(b.id)))
+    .map((b) => ({
+      // V3: image.src for original; V2 fallback: image.original.url
+      url: b.image.src || (b.image.original && b.image.original.url) || "",
+      blockId: String(b.id),
+      title: b.title || b.generated_title || "Untitled",
+    }));
+
+  $("#btn-import").disabled = true;
+  $("#btn-import").textContent = "Importing...";
+
+  postMsg({ type: "import-images", images });
+};
+
+// ── Image pagination ───────────────────────────────────────────────────
+
+$("#btn-img-prev").onclick = () => {
+  if (imagesPage > 1) { imagesPage--; selectedBlockIds.clear(); loadImages(); }
+};
+$("#btn-img-next").onclick = () => {
+  if (imagesPage < imagesTotalPages) { imagesPage++; selectedBlockIds.clear(); loadImages(); }
+};
+
+// ── Back nav ───────────────────────────────────────────────────────────
+
+$("#btn-back").onclick = () => {
+  showScreen("channels");
+};
+
+// ── Util ───────────────────────────────────────────────────────────────
+
+function esc(str) {
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>

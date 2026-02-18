@@ -1,0 +1,14 @@
+{
+  "name": "arena-figma-plugin",
+  "version": "1.0.0",
+  "description": "Browse your Are.na channels and import images into Figma",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "*",
+    "esbuild": "*",
+    "typescript": "*"
+  }
+}

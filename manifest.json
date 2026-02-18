@@ -1,0 +1,20 @@
+{
+  "name": "Are.na Browser",
+  "id": "000000000000000000",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "src/ui.html",
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.are.na",
+      "https://are.na",
+      "https://*.are.na",
+      "https://images.are.na",
+      "https://d2w9rnfcy7mm78.cloudfront.net",
+      "https://*.cloudfront.net"
+    ],
+    "reasoning": "Connects to Are.na API and loads images from Are.na CDN"
+  }
+}
