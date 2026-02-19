@@ -200,18 +200,19 @@
   .grid-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 6px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    flex-wrap: nowrap;
   }
 
   .grid-controls label {
     font-family: var(--font-mono);
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
+    gap: 4px;
+    font-size: 10px;
     cursor: pointer;
     user-select: none;
     letter-spacing: 0.02em;
@@ -219,12 +220,18 @@
 
   .grid-controls .spacer { flex: 1; }
 
-  .grid-controls .count {
+  .selection-bar {
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--muted);
     letter-spacing: 0.02em;
+    text-align: center;
+    padding: 4px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    display: none;
   }
+  .selection-bar.visible { display: block; }
 
   .image-grid {
     display: grid;
@@ -233,7 +240,10 @@
     gap: 4px;
     padding: 4px;
     align-content: start;
+    position: relative;
+    user-select: none;
   }
+
 
   .image-tile {
     position: relative;
@@ -443,12 +453,14 @@
   </div>
   <div class="grid-controls">
     <label>
-      <input type="checkbox" id="select-all" /> Select all
+      <input type="checkbox" id="select-all" /> All
     </label>
-    <span class="count" id="selection-count"></span>
+    <button class="small" id="btn-select-new">New</button>
+    <button class="small" id="btn-refresh-board" title="Re-fetch channel and re-check board">Refresh</button>
     <span class="spacer"></span>
-    <button class="primary small" id="btn-import" disabled>Import Selected</button>
+    <button class="primary small" id="btn-import" disabled>Import</button>
   </div>
+  <div class="selection-bar" id="selection-bar"></div>
   <div id="images-loading" class="loading" style="display:none">
     <div class="spinner"></div> Loading images...
   </div>
@@ -964,7 +976,7 @@ function renderImages() {
     `;
 
     tile.onclick = (e) => {
-      toggleSelect(tile, block);
+      toggleSelect(tile, block, e);
     };
 
     grid.appendChild(tile);
@@ -1000,22 +1012,47 @@ function refreshImportedBadges() {
 
 // ── Selection ──────────────────────────────────────────────────────────
 
-function toggleSelect(tile, block) {
-  const id = String(block.id);
-  if (selectedBlockIds.has(id)) {
-    selectedBlockIds.delete(id);
-    tile.classList.remove("selected");
+var lastClickedIndex = -1;
+
+function toggleSelect(tile, block, event) {
+  const tiles = Array.from(document.querySelectorAll(".image-tile"));
+  const currentIndex = tiles.indexOf(tile);
+
+  if (event && event.shiftKey && lastClickedIndex >= 0 && lastClickedIndex !== currentIndex) {
+    const start = Math.min(lastClickedIndex, currentIndex);
+    const end = Math.max(lastClickedIndex, currentIndex);
+    for (var i = start; i <= end; i++) {
+      const t = tiles[i];
+      const bid = t.dataset.blockId;
+      if (!selectedBlockIds.has(bid)) {
+        selectedBlockIds.add(bid);
+        t.classList.add("selected");
+      }
+    }
   } else {
-    selectedBlockIds.add(id);
-    tile.classList.add("selected");
+    const id = String(block.id);
+    if (selectedBlockIds.has(id)) {
+      selectedBlockIds.delete(id);
+      tile.classList.remove("selected");
+    } else {
+      selectedBlockIds.add(id);
+      tile.classList.add("selected");
+    }
   }
+
+  lastClickedIndex = currentIndex;
   updateSelectionCount();
 }
 
 function updateSelectionCount() {
   const n = selectedBlockIds.size;
-  const countEl = $("#selection-count");
-  countEl.textContent = n > 0 ? `${n} selected` : "";
+  const bar = $("#selection-bar");
+  if (n > 0) {
+    bar.textContent = n + " selected";
+    bar.classList.add("visible");
+  } else {
+    bar.classList.remove("visible");
+  }
   $("#btn-import").disabled = n === 0;
 
   const allSelected = imageBlocks.length > 0 && n === imageBlocks.length;
@@ -1037,6 +1074,29 @@ $("#select-all").onchange = (e) => {
   });
 
   updateSelectionCount();
+};
+
+$("#btn-select-new").onclick = () => {
+  selectedBlockIds.clear();
+  document.querySelectorAll(".image-tile").forEach((tile) => {
+    const blockId = tile.dataset.blockId;
+    if (!importedIds.has(blockId)) {
+      selectedBlockIds.add(blockId);
+      tile.classList.add("selected");
+    } else {
+      tile.classList.remove("selected");
+    }
+  });
+  updateSelectionCount();
+};
+
+$("#btn-refresh-board").onclick = async () => {
+  postMsg({ type: "get-imported-ids" });
+  if (currentSlug) {
+    toast("Syncing...");
+    await loadImages();
+  }
+  toast("Synced");
 };
 
 // ── Import ─────────────────────────────────────────────────────────────

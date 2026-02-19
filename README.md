@@ -21,3 +21,16 @@ A Figma plugin for browsing your Are.na channels and groups, importing images in
 3. Generate a personal access token at [are.na/settings/personal-access-tokens](https://are.na/settings/personal-access-tokens).
 
 4. Open the plugin, enter your Are.na username (the slug from your profile URL) and paste your token.
+
+## Changelog
+
+### v1.1.0
+
+- **Refresh button** — re-fetches the latest images from the Are.na channel and re-checks the Figma board for what's already been imported. One button to fully sync between Are.na and Figma.
+- **"Select new" button** — selects only images that haven't been imported yet, skipping anything already on the board.
+- **Shift-click range selection** — click one image, then shift-click another to select everything in between.
+- **Improved controls bar** — tighter layout with consistent sizing; selection count appears in its own row to avoid breaking the UI.
+
+### v1.0.0
+
+- Initial release. Browse channels, group support, batch import, import tracking.
