@@ -1,6 +1,6 @@
 # Are.na Browser for Figma
 
-![Are.na Browser Plugin](preview.png)
+![Are.na Browser Plugin](preview.jpeg)
 
 A Figma plugin for browsing your Are.na channels and groups, importing images individually or in batch, with visual tracking of what's already been imported.
 
